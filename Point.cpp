@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <functional>
 #include "Point.h"
 
 Point::Point(int ID, float x, float y, int k) {
@@ -50,16 +51,16 @@ Point::Point() {
 
 void Point::insertANeighbour(const std::pair<Point, float> &neigh, std::string print) {
     auto front = neighbours.top();
-    //std::cout << print;
+    std::cout << print;
     if (neigh.second < front.second) {
         neighbours.pop();
         neighbours.push(neigh);
-        //std::cout << "#";
+        std::cout << "#";
     }
-    /*for (int i = 0; i < 1000; ++i) {
+    /*for (int i = 0; i < 5000; ++i) {
         auto g = neighbours.top();
         neighbours.pop();
-        neighbours.push(g);
+        neighbours.push(neigh);
     }*/
 }
 

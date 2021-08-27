@@ -14,7 +14,7 @@ private:
     std::vector<Point> knn;
     std::vector<std::vector<float>> readPoints;
     void initialize(int dim);
-    static float eucledeanDistance(std::vector<float> p1, std::vector<float> p2);
+    static float eucledeanDistance(const std::vector<float> &p1, const std::vector<float> &p2);
 public:
     KNN(std::vector<std::vector<float>> readPoints);
     void compute(int k);

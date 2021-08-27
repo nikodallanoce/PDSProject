@@ -28,12 +28,12 @@ void KNN::compute(int k) {
     initialize(k);
     auto m = computeMatrix();
     for (int i = 0; i < m.size(); ++i) {
-        Point pi = knn[i];
+        //Point pi = knn[i];
         auto start = std::chrono::high_resolution_clock::now();
         for (int j = 0; j < m[i].size(); ++j) {
-            Point pj = knn[j + 1];
-            pi.insertANeighbour(std::pair(pj, m[i][j]), "{1}");
-            pj.insertANeighbour(std::pair(pi, m[i][j]), "{2}");
+            //Point pj = knn[j + 1];
+            knn[i].insertANeighbour(std::pair(knn[j + i + 1], m[i][j]), "{1}");
+            knn[j + i + 1].insertANeighbour(std::pair(knn[i], m[i][j]), "{2}");
         }
         auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
         //std::cout<<std::endl;
@@ -41,12 +41,14 @@ void KNN::compute(int k) {
                   << std::endl;
     }
 
+    std::cout << "";
 }
 
 void KNN::initialize(int k) {
     knn = std::vector<Point>(readPoints.size());
     for (int i = 0; i < readPoints.size(); ++i) {
-        knn[i] = Point(i + 1, readPoints[i][0], readPoints[i][1], k);
+        auto coord = readPoints[i];
+        knn[i] = Point(i + 1, coord[0], coord[1], k);
     }
 }
 
@@ -62,7 +64,7 @@ std::vector<std::vector<float>> KNN::computeMatrix() {
     return adj;
 }
 
-float KNN::eucledeanDistance(std::vector<float> p1, std::vector<float> p2) {
+float KNN::eucledeanDistance(const std::vector<float> &p1, const std::vector<float> &p2) {
     float d = powf(p2[0] - p1[0], 2) + powf(p2[1] - p1[1], 2);
     return sqrtf(d);
 }
