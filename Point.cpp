@@ -37,36 +37,30 @@ std::string Point::toString() {
 }
 
 void Point::initializeNeighbours(int k) {
-    neighbours = std::vector<std::pair<Point, float>>(k);
-    for (auto &neighbour : neighbours) {
-        neighbour.second = MAXFLOAT;
+    for (int i = 0; i < k; ++i) {
+        neighbours.push(std::pair(Point(), MAXFLOAT));
     }
-    std::make_heap(neighbours.begin(), neighbours.end(),
-                   [](const std::pair<Point, float> &p1, std::pair<Point, float> &p2) {
-                       return p1.second < p2.second;
-                   });
 }
 
 Point::Point() {
     ID = -1;
     x = -1;
     y = -1;
-    neighbours = std::vector<std::pair<Point, float>>(0);
 }
 
-void Point::insertANeighbour(const std::pair<Point, float>& neigh) {
-    /*auto comp = [](const std::pair<Point, float> &p1, std::pair<Point, float> &p2) {
-        return p1.second < p2.second;
-    };
-    if (neigh.second < neighbours[0].second) {
-        //std::pop_heap(neighbours.begin(), neighbours.end(), comp);
-        std::pop_heap(neighbours.begin(),neighbours.end(), comp);
-        neighbours.pop_back();
-        neighbours.push_back(neigh);
-        std::push_heap(neighbours.begin(), neighbours.end(), comp);
+void Point::insertANeighbour(const std::pair<Point, float> &neigh, std::string print) {
+    auto front = neighbours.top();
+    //std::cout << print;
+    if (neigh.second < front.second) {
+        neighbours.pop();
+        neighbours.push(neigh);
+        //std::cout << "#";
+    }
+    /*for (int i = 0; i < 1000; ++i) {
+        auto g = neighbours.top();
+        neighbours.pop();
+        neighbours.push(g);
     }*/
-    //neighbours[1] = neigh;
-    std::cout<<"# ";
 }
 
 

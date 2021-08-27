@@ -9,20 +9,20 @@
 
 KNN::KNN(std::vector<std::vector<float>> readPoints) {
     this->readPoints = readPoints;
-
 }
 
-/*void KNN::compute(int k) {
+void KNN::computeLessMem(int k) {
     initialize(k);
     for (int i = 0; i < readPoints.size() - 1; ++i) {
+        Point pi = knn[i];
         for (int j = i + 1; j < readPoints.size(); ++j) {
-            auto distance = knn[i].distanceTo(knn[j]);
-            knn[i].insertANeighbour(std::pair(knn[j], distance));
-            knn[j].insertANeighbour(std::pair(knn[i], distance));
+            Point pj = knn[j];
+            auto distance = pi.distanceTo(pj);
+            pi.insertANeighbour(std::pair(pj, distance), "");
+            pj.insertANeighbour(std::pair(pi, distance), "");
         }
-
     }
-}*/
+}
 
 void KNN::compute(int k) {
     initialize(k);
@@ -32,12 +32,13 @@ void KNN::compute(int k) {
         auto start = std::chrono::high_resolution_clock::now();
         for (int j = 0; j < m[i].size(); ++j) {
             Point pj = knn[j + 1];
-            knn[i].insertANeighbour(std::pair(knn[j + 1], m[i][j]));
-            knn[j + 1].insertANeighbour(std::pair(knn[i], m[i][j]));
+            pi.insertANeighbour(std::pair(pj, m[i][j]), "{1}");
+            pj.insertANeighbour(std::pair(pi, m[i][j]), "{2}");
         }
         auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
         //std::cout<<std::endl;
-        std::cout << i << "-> " << "j= " << m[i].size() << " " << std::to_string(elapsed.count()) << std::endl;
+        std::cout << " i=" << i << " -> " << "len=" << m[i].size() << " t=" << std::to_string(elapsed.count())
+                  << std::endl;
     }
 
 }

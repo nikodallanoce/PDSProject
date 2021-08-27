@@ -56,11 +56,12 @@ std::vector<std::vector<float>> buildAdjacencyMatrix(std::vector<std::vector<flo
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    generatePoints("points.txt", 50);
+    generatePoints("points.txt", 10000);
     KNN gr(readPoints("points.txt"));
     auto start = std::chrono::high_resolution_clock::now();
-    gr.compute(3);
+    gr.compute(5);
     auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout<< std::to_string(elapsed.count()) <<std::endl;
+
     return 0;
 }

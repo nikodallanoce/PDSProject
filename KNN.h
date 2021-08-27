@@ -18,6 +18,7 @@ private:
 public:
     KNN(std::vector<std::vector<float>> readPoints);
     void compute(int k);
+    void computeLessMem(int k);
     std::vector<std::vector<float>> computeMatrix();
 };
 
