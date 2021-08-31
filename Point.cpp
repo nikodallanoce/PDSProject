@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <functional>
+#include <memory>
 #include "Point.h"
 
 Point::Point(int ID, float x, float y, int k) {
@@ -26,11 +27,6 @@ float Point::getY() const {
     return y;
 }
 
-float Point::distanceTo(const Point &otherPoint) {
-    float d = powf(otherPoint.getX() - getX(), 2) + powf(otherPoint.getY() - getY(), 2);
-    return sqrtf(d);
-}
-
 std::string Point::toString() {
     std::string s =
             "ID: " + std::to_string(getId()) + " | x=" + std::to_string(getX()) + " , y=" + std::to_string(getY());
@@ -38,8 +34,10 @@ std::string Point::toString() {
 }
 
 void Point::initializeNeighbours(int k) {
+    const Point *p = new Point();
+    std::pair<const Point *, float> ins = std::make_pair(p, std::numeric_limits<float>::max());
     for (int i = 0; i < k; ++i) {
-        neighbours.push(std::pair(Point(), MAXFLOAT));
+        neighbours.push(ins);
     }
 }
 
@@ -49,19 +47,24 @@ Point::Point() {
     y = -1;
 }
 
-void Point::insertANeighbour(const std::pair<Point, float> &neigh, std::string print) {
-    auto front = neighbours.top();
-    std::cout << print;
-    if (neigh.second < front.second) {
+void Point::insertANeighbour(const Point *p, const float d) {
+    auto front = &neighbours.top();
+
+    if (d < front->second) {
+        std::pair<const Point *, float> neigh = std::make_pair(p, d);
         neighbours.pop();
         neighbours.push(neigh);
-        std::cout << "#";
     }
-    /*for (int i = 0; i < 5000; ++i) {
-        auto g = neighbours.top();
-        neighbours.pop();
-        neighbours.push(neigh);
-    }*/
 }
+
+std::vector<const Point*> Point::getTopKNeighbours() {
+    auto topKPoints = std::vector<const Point *>();
+    while (!neighbours.empty()){
+        topKPoints.push_back(neighbours.top().first);
+        neighbours.pop();
+    }
+    return topKPoints;
+}
+
 
 

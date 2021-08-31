@@ -2,17 +2,18 @@
 // Created by niko on 24/08/21.
 //
 
-#ifndef PROJECT_POINT_H
-#define PROJECT_POINT_H
+#ifndef PDSPROJECT_POINT_H
+#define PDSPROJECT_POINT_H
 
 
 #include <string>
 #include <vector>
 #include <queue>
+#include <list>
 
 
 class Point {
-    typedef std::pair<Point, float> pi;
+    typedef std::pair<const Point*, float> pi;
 
     struct comp {
         constexpr bool operator()(pi &a, pi &b)
@@ -25,17 +26,16 @@ private:
     int ID;
     float x;
     float y;
-    //std::vector<std::pair<Point, float>> neighbours = std::vector<std::pair<Point, float>>(0);
     std::priority_queue<pi, std::vector<pi>, comp> neighbours;
+
+
 
 public:
     Point();
 
     Point(int ID, float x, float y, int k);
 
-    float distanceTo(const Point &otherPoint);
-
-    void insertANeighbour(const std::pair<Point, float> &neigh, std::string print);
+    void insertANeighbour(const Point* p, float d);
 
     int getId() const;
 
@@ -45,8 +45,10 @@ public:
 
     std::string toString();
 
+    std::vector<const Point*> getTopKNeighbours();
+
     void initializeNeighbours(int k);
 };
 
 
-#endif //PROJECT_POINT_H
+#endif //PDSPROJECT_POINT_H

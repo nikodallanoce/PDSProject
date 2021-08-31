@@ -39,10 +39,10 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    //generatePoints("points.txt", 6);
-    KNN gr(readPoints("points_test.txt"));
+    generatePoints("points.txt", 6);
+    KNN gr(readPoints("points.txt"));
     auto start = std::chrono::high_resolution_clock::now();
-    gr.compute(3);
+    gr.compute(4);
     auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout<< std::to_string(elapsed.count()) <<std::endl;
 
