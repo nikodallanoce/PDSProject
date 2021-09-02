@@ -6,6 +6,7 @@
 #include <chrono>
 #include "Point.h"
 #include "KNN.h"
+#include "KNNParallel.h"
 
 void print(const std::string &str) {
     std::cout << str << std::endl;
@@ -39,12 +40,18 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    generatePoints("points.txt", 6);
-    KNN gr(readPoints("points.txt"));
+    generatePoints("points.txt", 8);
+    KNNParallel kp(readPoints("points.txt"));
+    KNN k(readPoints("points.txt"));
     auto start = std::chrono::high_resolution_clock::now();
-    gr.compute(4);
+    kp.compute(5, 3);
     auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout<< std::to_string(elapsed.count()) <<std::endl;
+    std::cout << "par: " << std::to_string(elapsed.count()) << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    k.compute(5);
+    elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+    std::cout << "seq: " << std::to_string(elapsed.count()) << std::endl;
 
     return 0;
 }

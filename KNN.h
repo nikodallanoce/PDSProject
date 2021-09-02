@@ -5,7 +5,6 @@
 #ifndef PDSPROJECT_KNN_H
 #define PDSPROJECT_KNN_H
 
-
 #include <vector>
 #include "Point.h"
 

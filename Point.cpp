@@ -8,6 +8,8 @@
 #include <memory>
 #include "Point.h"
 
+std::mutex mtx;
+
 Point::Point(int ID, float x, float y, int k) {
     this->ID = ID;
     this->x = x;
@@ -49,22 +51,48 @@ Point::Point() {
 
 void Point::insertANeighbour(const Point *p, const float d) {
     auto front = &neighbours.top();
-
     if (d < front->second) {
-        std::pair<const Point *, float> neigh = std::make_pair(p, d);
+        pi neigh = std::make_pair(p, d);
         neighbours.pop();
         neighbours.push(neigh);
     }
 }
 
-std::vector<const Point*> Point::getTopKNeighbours() {
+void Point::insertANeighbourParallel(const Point *p, float d) {
+
+
+    n.emplace_back(p, d);
+
+    /*{
+        std::lock_guard<std::mutex> m(mtx);
+        insertANeighbour(p,d);
+    }*/
+}
+
+std::vector<const Point *> Point::getTopKNeighbours() {
     auto topKPoints = std::vector<const Point *>();
-    while (!neighbours.empty()){
+    while (!neighbours.empty()) {
         topKPoints.push_back(neighbours.top().first);
         neighbours.pop();
     }
     return topKPoints;
 }
+
+std::vector<Point::pi> *Point::getN() {
+    return &n;
+}
+
+void Point::setN(const std::vector<pi> *neigh) {
+    this->n = *neigh;
+}
+
+Point::Point(int ID, float x, float y, std::vector<std::vector<float>> &readPoints) {
+    this->ID = ID;
+    this->x = x;
+    this->y = y;
+    n.reserve(readPoints.size());
+}
+
 
 
 

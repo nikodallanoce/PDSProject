@@ -10,11 +10,13 @@
 #include <vector>
 #include <queue>
 #include <list>
+#include <mutex>
 
 
 class Point {
-    typedef std::pair<const Point*, float> pi;
 
+public:
+    typedef std::pair<const Point*, float> pi;
     struct comp {
         constexpr bool operator()(pi &a, pi &b)
         const noexcept {
@@ -27,15 +29,21 @@ private:
     float x;
     float y;
     std::priority_queue<pi, std::vector<pi>, comp> neighbours;
+    std::vector<pi> n;
+public:
+    std::vector<pi>* getN();
 
-
+    void setN(const std::vector<pi> *n);
 
 public:
     Point();
 
     Point(int ID, float x, float y, int k);
 
+    Point(int ID, float x, float y, std::vector<std::vector<float>> &readPoints);
+
     void insertANeighbour(const Point* p, float d);
+    void insertANeighbourParallel(const Point* p, float d);
 
     int getId() const;
 

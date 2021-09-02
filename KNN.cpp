@@ -8,6 +8,7 @@
 #include <functional>
 #include <utility>
 #include "KNN.h"
+#include <thread>
 
 KNN::KNN(std::vector<std::vector<float>> readPoints) {
     this->readPoints = std::move(readPoints);
@@ -16,9 +17,9 @@ KNN::KNN(std::vector<std::vector<float>> readPoints) {
 void KNN::computeLessMem(int k) {
     initialize(k);
     for (int i = 0; i < readPoints.size() - 1; ++i) {
-        Point* pi= &knn.at(i);
+        Point *pi = &knn.at(i);
         for (int j = i + 1; j < readPoints.size(); ++j) {
-            Point* pj = &knn.at(j);
+            Point *pj = &knn.at(j);
             auto distance = eucledeanDistance({pi->getX(), pi->getY()}, {pj->getX(), pj->getY()});
             pi->insertANeighbour(pj, distance);
             pj->insertANeighbour(pi, distance);
@@ -30,20 +31,20 @@ void KNN::compute(int k) {
     initialize(k);
     auto m = computeDistanceMatrix();
     for (int i = 0; i < m.size(); ++i) {
-        Point* pi= &knn.at(i);
+        Point *pi = &knn.at(i);
         auto start = std::chrono::high_resolution_clock::now();
         for (int j = 0; j < m[i].size(); ++j) {
-            Point* pj = &knn.at(j + i + 1);
+            Point *pj = &knn.at(j + i + 1);
             pi->insertANeighbour(pj, m[i][j]);
             pj->insertANeighbour(pi, m[i][j]);
         }
         auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
         //std::cout<<std::endl;
-        std::cout << " i=" << i << " -> " << "len=" << m[i].size() << " t=" << std::to_string(elapsed.count())
-                  << std::endl;
+        /*std::cout << " i=" << i << " -> " << "len=" << m[i].size() << " t=" << std::to_string(elapsed.count())
+                  << std::endl;*/
     }
 
-    std::cout << getTopKResultPerPoint();
+    //std::cout << getTopKResultPerPoint();
 }
 
 void KNN::initialize(int k) {
@@ -73,11 +74,11 @@ float KNN::eucledeanDistance(const std::vector<float> &p1, const std::vector<flo
 
 std::string KNN::getTopKResultPerPoint() {
     std::string ris;
-    for (auto p:knn) {
-        auto topk= p.getTopKNeighbours();
-        ris+= std::to_string(p.getId())+"-> ";
-        std::for_each(topk.begin(), topk.end(), [&ris](auto ptk){ris+=std::to_string(ptk->getId())+" ";});
-        ris+="\n";
+    for (auto p: knn) {
+        auto topk = p.getTopKNeighbours();
+        ris += std::to_string(p.getId()) + "-> ";
+        std::for_each(topk.begin(), topk.end(), [&ris](auto ptk) { ris += std::to_string(ptk->getId()) + " "; });
+        ris += "\n";
     }
 
     return ris;
