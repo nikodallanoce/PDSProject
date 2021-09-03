@@ -6,18 +6,20 @@
 #define PDSPROJECT_KNNPARALLEL_H
 #include <vector>
 #include "Point.h"
+#include "KNN.h"
+#include <functional>
 
-class KNNParallel {
-private:
-    std::vector<Point> knn;
-    std::vector<std::vector<float>> readPoints;
+class KNNParallel: public KNN{
+protected:
     std::vector<std::vector<float>> adj;
-    void initialize(int dim);
     void matrixRowAllocation(int istart, int iend, int len);
     void getTopKResultPerPoint(Point* p, int k);
-    static float eucledeanDistance(const std::vector<float> &p1, const std::vector<float> &p2);
-    void computeDistancePerRow(std::vector<int> &rowIndexes);
-    void assignNeighboursReversed(std::vector<int> &rowIndexes);
+    void computeDistances(std::vector<int>* rowIndexes, bool forw);
+    void computeDistancesRev(std::vector<int> *rowIndexes);
+    void computeDistancesFor(std::vector<int> *rowIndexes);
+    void assignNeighboursReversed(std::vector<int> *rowIndexes);
+    std::vector<std::vector<int>> distributeIndex(int nw) const;
+
 public:
     KNNParallel(std::vector<std::vector<float>> readPoints);
     void compute(int k, int nw);
@@ -25,7 +27,7 @@ public:
 
     void matrixAllocation(int nw);
 
-    std::vector<std::vector<int>> distributeIndex(int nw) const;
+    void parallelDistances(std::vector<std::vector<int>> &indexes, bool forw);
 };
 
 

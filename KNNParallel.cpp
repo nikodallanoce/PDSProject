@@ -6,62 +6,63 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <utility>
 #include "KNNParallel.h"
 
 #define EOS NULL
 
-KNNParallel::KNNParallel(std::vector<std::vector<float>> readPoints) {
-    this->readPoints = std::move(readPoints);
+KNNParallel::KNNParallel(std::vector<std::vector<float>> readPoints) : KNN(std::move(readPoints)) {
     this->adj = std::vector(this->readPoints.size() - 1, std::vector<float>());
 }
 
-
 void KNNParallel::computeDistanceMatrix(std::vector<std::vector<int>> indexes) {
-
-    std::vector<std::thread> procDist = std::vector<std::thread>();
     auto start = std::chrono::high_resolution_clock::now();
-    for (auto &index: indexes) {
-        procDist.emplace_back(std::thread(&KNNParallel::computeDistancePerRow, this, std::ref(index)));
-        //computeDistancePerRow(std::ref(ind));
-    }
-    for (std::thread &t: procDist) {                        // await thread termination
-        t.join();
-        //std::cout << t.get_id() << std::endl;
-    }
+    auto f1 = [](Point *p1, Point *p2, float d) { p1->insertANeighbour(p2, d); };
+    auto f2 = [](Point *p1, Point *p2, float d) { p2->insertANeighbour(p1, d); };
+
+    parallelDistances(indexes, true);
     auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout << "av: " << std::to_string(elapsed.count()) << std::endl;
-    procDist=std::vector<std::thread>();
-    indexes.at(indexes.size()-1).push_back((int) readPoints.size() - 1);
+
+    //indexes.at(indexes.size() - 1).push_back((int) readPoints.size() - 1);
+
     start = std::chrono::high_resolution_clock::now();
-    for (auto &index: indexes) {
-        procDist.emplace_back(std::thread(&KNNParallel::assignNeighboursReversed, this, std::ref(index)));
-    }
-    for (std::thread &t: procDist) {                        // await thread termination
-        t.join();
-    }
+    parallelDistances(indexes, false);
     elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout << "in: " << std::to_string(elapsed.count()) << std::endl;
 }
 
-void KNNParallel::computeDistancePerRow(std::vector<int> &rowIndexes) {
-
-    for (int i: rowIndexes) {
-        //std::cout << i << std::endl;
-        Point *pi = &knn.at(i);
-        auto row = std::vector<float>(readPoints.size() - 1 - i);
-        for (int j = i + 1; j < readPoints.size(); ++j) {
-            float d = eucledeanDistance(readPoints.at(i), readPoints.at(j));
-            row.at(j - i - 1) = d;
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, d);
-            //pj->insertANeighbour(pi, d);
-        }
-        adj.at(i) = row;
+void KNNParallel::parallelDistances(std::vector<std::vector<int>> &indexes, bool forw) {
+    std::vector<std::thread> procDist = std::vector<std::thread>();
+    procDist.reserve(indexes.size());
+    for (auto &index: indexes) {
+        procDist.emplace_back(&KNNParallel::computeDistances, this, &index, forw);
+    }
+    for (std::thread &t: procDist) {                        // await thread termination
+        t.join();
     }
 }
 
-void KNNParallel::assignNeighboursReversed(std::vector<int> &rowIndexes) {
-    for (int i: rowIndexes) {
+void KNNParallel::computeDistances(std::vector<int>* rowIndexes, bool forw) {
+    for (int i: *rowIndexes) {
+        //std::cout << i << std::endl;
+        Point *pi = &knn.at(i);
+        //auto row = std::vector<float>(readPoints.size() - 1 - i);
+        for (int j = i + 1; j < readPoints.size(); ++j) {
+            float d = eucledeanDistance(&readPoints.at(i), &readPoints.at(j));
+            //row.at(j - i - 1) = d;
+            Point *pj = &knn.at(j);
+            if (forw) {
+                pi->insertANeighbour(pj, d);
+                //pj->insertANeighbour(pi, d);
+            } else { pj->insertANeighbour(pi, d); }
+        }
+        //adj.at(i) = row;
+    }
+}
+
+void KNNParallel::assignNeighboursReversed(std::vector<int> *rowIndexes) {
+    for (int i: *rowIndexes) {
         //if (i == 0) { i = (int) readPoints.size() - 1; }
         Point *pi = &knn.at(i);
         int j = 0;
@@ -84,13 +85,24 @@ std::vector<std::vector<int>> KNNParallel::distributeIndex(int nw) const {
             indexIntervall[i % indexIntervall.size()].emplace_back(rev);
         }
     }
+    auto cmp = [](std::vector<int> &v1, std::vector<int> &v2) { return v1.size() > v2.size(); };
+    std::sort(indexIntervall.begin(), indexIntervall.end(), cmp);
+    for (int i = 0; i < indexIntervall.size(); ++i) {
+        auto q1 = &indexIntervall.at(i);
+        auto q2 = &indexIntervall.at(indexIntervall.size() - i - 1);
+        if (q1->size() - 1 > q2->size()) {
+            auto e = &(q1->at(q1->size() - 1));
+            q1->pop_back();
+            q2->push_back(*e);
+        } else {
+            break;
+        }
+    }
+
+    for (auto &e: indexIntervall) {
+        printf("%d\n", e.size());
+    }
     return indexIntervall;
-}
-
-
-float KNNParallel::eucledeanDistance(const std::vector<float> &p1, const std::vector<float> &p2) {
-    float d = powf(p2[0] - p1[0], 2) + powf(p2[1] - p1[1], 2);
-    return sqrtf(d);
 }
 
 void KNNParallel::compute(int k, int nw) {
@@ -113,14 +125,6 @@ void KNNParallel::compute(int k, int nw) {
     }*/
     //getTopKResultPerPoint(queue.front(), k);
     //std::cout << "" << std::endl;
-}
-
-void KNNParallel::initialize(int k) {
-    knn = std::vector<Point>(readPoints.size());
-    for (int i = 0; i < readPoints.size(); ++i) {
-        std::vector<float> coord = std::ref(readPoints[i]);
-        knn[i] = Point(i + 1, coord[0], coord[1], k);
-    }
 }
 
 void KNNParallel::getTopKResultPerPoint(Point *p, int k) {

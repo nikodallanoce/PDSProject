@@ -52,21 +52,10 @@ Point::Point() {
 void Point::insertANeighbour(const Point *p, const float d) {
     auto front = &neighbours.top();
     if (d < front->second) {
-        pi neigh = std::make_pair(p, d);
+        std::pair<const Point *, float> neigh = std::make_pair(p, d);
         neighbours.pop();
         neighbours.push(neigh);
     }
-}
-
-void Point::insertANeighbourParallel(const Point *p, float d) {
-
-
-    n.emplace_back(p, d);
-
-    /*{
-        std::lock_guard<std::mutex> m(mtx);
-        insertANeighbour(p,d);
-    }*/
 }
 
 std::vector<const Point *> Point::getTopKNeighbours() {

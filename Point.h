@@ -43,7 +43,6 @@ public:
     Point(int ID, float x, float y, std::vector<std::vector<float>> &readPoints);
 
     void insertANeighbour(const Point* p, float d);
-    void insertANeighbourParallel(const Point* p, float d);
 
     int getId() const;
 
