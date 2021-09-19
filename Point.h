@@ -16,7 +16,8 @@
 class Point {
 
 public:
-    typedef std::pair<const Point*, float> pi;
+    typedef std::pair<const Point *, float> pi;
+
     struct comp {
         constexpr bool operator()(pi &a, pi &b)
         const noexcept {
@@ -26,33 +27,23 @@ public:
 
 private:
     int ID;
-    float x;
-    float y;
-    std::priority_queue<pi, std::vector<pi>, comp> neighbours;
-    std::vector<pi> n;
+    std::vector<float> coordinates;
 public:
-    std::vector<pi>* getN();
+    const std::vector<float> &getCoordinates() const;
 
-    void setN(const std::vector<pi> *n);
+private:
+    std::priority_queue<pi, std::vector<pi>, comp> neighbours;
 
 public:
     Point();
 
     Point(int ID, float x, float y, int k);
 
-    Point(int ID, float x, float y, std::vector<std::vector<float>> &readPoints);
-
-    void insertANeighbour(const Point* p, float d);
+    void insertANeighbour(const Point *p, float d);
 
     int getId() const;
 
-    float getX() const;
-
-    float getY() const;
-
-    std::string toString();
-
-    std::vector<const Point*> getTopKNeighbours();
+    std::vector<const Point *> getTopKNeighbours();
 
     void initializeNeighbours(int k);
 };

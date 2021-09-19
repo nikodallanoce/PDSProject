@@ -38,7 +38,7 @@ KNN::KNN(std::vector<std::vector<float>> readPoints) {
             pi->insertANeighbour(pj, m[i][j]);
             pj->insertANeighbour(pi, m[i][j]);
         }
-        auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+        auto elapsed = std::chrono::start<double>(std::chrono::high_resolution_clock::now() - start);
         //std::cout<<std::endl;
         //std::cout << " i=" << i << " -> " << "len=" << m[i].size() << " t=" << std::to_string(elapsed.count())
                   //<< std::endl;
@@ -49,15 +49,41 @@ KNN::KNN(std::vector<std::vector<float>> readPoints) {
 
 void KNN::compute(int k) {
     initialize(k);
+    //forward();
+    //backward();
     for (int i = 0; i < readPoints.size() - 1; ++i) {
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < readPoints.size(); ++j) {
             Point *pj = &knn.at(j);
-            float dist = eucledeanDistance(&readPoints[i], &readPoints[j]);
+            float dist = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
             pi->insertANeighbour(pj, dist);
             pj->insertANeighbour(pi, dist);
         }
     }
+}
+
+void KNN::forward() {
+    for (int i = 0; i < knn.size() - 1; ++i) {
+        Point *pi = &knn.at(i);
+        for (int j = i + 1; j < knn.size(); ++j) {
+            insertNeighbour(i, pi, j);
+        }
+    }
+}
+
+void KNN::backward() {
+    for (int i = (int) knn.size() - 1; i >= 0; --i) {
+        Point *pi = &knn.at(i);
+        for (int j = i - 1; j >= 0; --j) {
+            insertNeighbour(i, pi, j);
+        }
+    }
+}
+
+void KNN::insertNeighbour(int i, Point *pi, int j) {
+    Point *pj = &knn.at(j);
+    float d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
+    pi->insertANeighbour(pj, d);
 }
 
 void KNN::initialize(int k) {
@@ -95,8 +121,4 @@ std::string KNN::getTopKResultPerPoint() {
     }
 
     return ris;
-}
-
-void KNN::addNeighbour(Point* p1, Point* p2, float dist) {
-    p1->insertANeighbour(p2, dist);
 }

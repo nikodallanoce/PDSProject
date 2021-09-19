@@ -40,18 +40,23 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    generatePoints("points.txt", 10000);
-    KNNParallel kp(readPoints("points.txt"));
-    KNN k(readPoints("points.txt"));
+    generatePoints("points.txt", 20000);
+    auto rp= readPoints("points.txt");
+    KNNParallel kp(rp);
+    KNN ks(rp);
+
+    int k = 50;
     auto start = std::chrono::high_resolution_clock::now();
-    kp.compute(5, 16);
-    auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "par: " << std::to_string(elapsed.count()) << std::endl;
+    kp.compute(k, 16);
+    auto tpar = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+    std::cout << "par: " << std::to_string(tpar.count()) << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
-    k.compute(5);
-    elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "seq: " << std::to_string(elapsed.count()) << std::endl;
+    ks.compute(k);
+    auto tseq = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+    std::cout << "seq: " << std::to_string(tseq.count()) << std::endl;
+
+    std::cout << "spdup: " << std::to_string(tseq.count()/tpar.count()) << std::endl;
 
     return 0;
 }

@@ -13,13 +13,14 @@ protected:
     std::vector<Point> knn;
     std::vector<std::vector<float>> readPoints;
     void initialize(int dim);
-    void addNeighbour(Point* p1, Point* p2, float dist);
     std::string getTopKResultPerPoint();
+    void backward();
+    void forward();
+    void insertNeighbour(int i, Point *pi, int j);
     static float eucledeanDistance(const std::vector<float> *p1, const std::vector<float> *p2);
 public:
     KNN(std::vector<std::vector<float>> readPoints);
     void compute(int k);
-    void computeLessMem(int k);
     std::vector<std::vector<float>> computeDistanceMatrix();
 };
 

@@ -12,27 +12,12 @@ std::mutex mtx;
 
 Point::Point(int ID, float x, float y, int k) {
     this->ID = ID;
-    this->x = x;
-    this->y = y;
+    this->coordinates = {x, y};
     initializeNeighbours(k);
 }
 
 int Point::getId() const {
     return ID;
-}
-
-float Point::getX() const {
-    return x;
-}
-
-float Point::getY() const {
-    return y;
-}
-
-std::string Point::toString() {
-    std::string s =
-            "ID: " + std::to_string(getId()) + " | x=" + std::to_string(getX()) + " , y=" + std::to_string(getY());
-    return s;
 }
 
 void Point::initializeNeighbours(int k) {
@@ -45,8 +30,7 @@ void Point::initializeNeighbours(int k) {
 
 Point::Point() {
     ID = -1;
-    x = -1;
-    y = -1;
+    this->coordinates = std::vector<float>();
 }
 
 void Point::insertANeighbour(const Point *p, const float d) {
@@ -67,19 +51,8 @@ std::vector<const Point *> Point::getTopKNeighbours() {
     return topKPoints;
 }
 
-std::vector<Point::pi> *Point::getN() {
-    return &n;
-}
-
-void Point::setN(const std::vector<pi> *neigh) {
-    this->n = *neigh;
-}
-
-Point::Point(int ID, float x, float y, std::vector<std::vector<float>> &readPoints) {
-    this->ID = ID;
-    this->x = x;
-    this->y = y;
-    n.reserve(readPoints.size());
+const std::vector<float> &Point::getCoordinates() const {
+    return coordinates;
 }
 
 
