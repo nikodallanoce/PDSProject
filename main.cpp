@@ -40,7 +40,7 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    generatePoints("points.txt", 20000);
+    generatePoints("points.txt", 30000);
     auto rp= readPoints("points.txt");
     KNNParallel kp(rp);
     KNN ks(rp);

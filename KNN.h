@@ -16,7 +16,7 @@ protected:
     std::string getTopKResultPerPoint();
     void backward();
     void forward();
-    void insertNeighbour(int i, Point *pi, int j);
+    void insertNeighbour(Point *pi, int j);
     static float eucledeanDistance(const std::vector<float> *p1, const std::vector<float> *p2);
 public:
     KNN(std::vector<std::vector<float>> readPoints);

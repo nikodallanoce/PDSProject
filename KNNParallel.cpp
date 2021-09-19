@@ -50,7 +50,7 @@ void KNNParallel::forward(std::vector<int> *rowIndexes) {
     for (int i: *rowIndexes) {
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < knn.size(); ++j) {
-            insertNeighbour(i, pi, j);
+            insertNeighbour(pi, j);
         }
     }
 }
@@ -59,7 +59,7 @@ void KNNParallel::backward(std::vector<int> *rowIndexes) {
     for (int i: *rowIndexes) {
         Point *pi = &knn.at(i);
         for (int j = i - 1; j >= 0; j--) {
-            insertNeighbour(i, pi, j);
+            insertNeighbour(pi, j);
         }
     }
 }

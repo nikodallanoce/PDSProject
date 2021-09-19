@@ -66,7 +66,7 @@ void KNN::forward() {
     for (int i = 0; i < knn.size() - 1; ++i) {
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < knn.size(); ++j) {
-            insertNeighbour(i, pi, j);
+            insertNeighbour(pi, j);
         }
     }
 }
@@ -75,12 +75,12 @@ void KNN::backward() {
     for (int i = (int) knn.size() - 1; i >= 0; --i) {
         Point *pi = &knn.at(i);
         for (int j = i - 1; j >= 0; --j) {
-            insertNeighbour(i, pi, j);
+            insertNeighbour(pi, j);
         }
     }
 }
 
-void KNN::insertNeighbour(int i, Point *pi, int j) {
+void KNN::insertNeighbour(Point *pi, int j) {
     Point *pj = &knn.at(j);
     float d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
     pi->insertANeighbour(pj, d);

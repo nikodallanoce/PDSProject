@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 project(Project)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+SET(CMAKE_CXX_FLAGS_DEBUG  "-O2")
+SET(CMAKE_CXX_FLAGS -pthread)
+
 
 add_executable(Project main.cpp Point.cpp Point.h KNN.cpp KNN.h KNNParallel.cpp KNNParallel.h)
