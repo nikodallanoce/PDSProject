@@ -12,24 +12,25 @@
 #define EOS NULL
 
 KNNParallel::KNNParallel(std::vector<std::vector<float>> readPoints) : KNN(std::move(readPoints)) {
-    //this->adj = std::vector(this->readPoints.size() - 1, std::vector<float>());
+    //adj = std::vector<std::vector<float>>(this->readPoints.size(), std::vector<float>(0));
 }
 
-void KNNParallel::computeDistanceMatrix(std::vector<std::vector<int>> indexes) {
+void KNNParallel::computeNeighbours(std::vector<std::vector<int>> indexes) {
+    float *m[this->readPoints.size() - 1];
     auto start = std::chrono::high_resolution_clock::now();
-    parallelDistances(indexes, true);
+    parallelDistances(indexes, true, m);
     auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout << "av: " << std::to_string(elapsed.count()) << std::endl;
 
     indexes.at(indexes.size() - 1).push_back((int) readPoints.size() - 1);
 
     start = std::chrono::high_resolution_clock::now();
-    parallelDistances(indexes, false);
+    parallelDistances(indexes, false, m);
     elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout << "in: " << std::to_string(elapsed.count()) << std::endl;
 }
 
-void KNNParallel::parallelDistances(std::vector<std::vector<int>> &indexes, bool forw) {
+void KNNParallel::parallelDistances(std::vector<std::vector<int>> &indexes, bool forw, float *adj[]) {
     std::vector<std::thread> procDist = std::vector<std::thread>();
     procDist.reserve(indexes.size());
     if (forw) {
@@ -50,7 +51,8 @@ void KNNParallel::forward(std::vector<int> *rowIndexes) {
     for (int i: *rowIndexes) {
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < knn.size(); ++j) {
-            insertNeighbour(pi, j);
+            Point *pj = &knn.at(j);
+            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
         }
     }
 }
@@ -59,7 +61,36 @@ void KNNParallel::backward(std::vector<int> *rowIndexes) {
     for (int i: *rowIndexes) {
         Point *pi = &knn.at(i);
         for (int j = i - 1; j >= 0; j--) {
-            insertNeighbour(pi, j);
+            Point *pj = &knn.at(j);
+            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
+        }
+    }
+}
+
+void KNNParallel::forwardWithMatrix(std::vector<int> *rowIndexes, float *adj[]) {
+    for (int i: *rowIndexes) {
+        auto rowDist = new float[knn.size() - 1 - i];
+        Point *pi = &knn.at(i);
+        for (int j = i + 1; j < knn.size(); ++j) {
+            Point *pj = &knn.at(j);
+            auto d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
+            rowDist[j - i - 1] = d;
+            pi->insertANeighbour(pj, d);
+        }
+        adj[i]=rowDist;
+    }
+}
+
+void KNNParallel::backwardWithMatrix(std::vector<int> *rowIndexes, float *adj[]) {
+    for (int i: *rowIndexes) {
+        Point *pi = &knn.at(i);
+        int j = 0;
+        for (i = i - 1; i >= 0; --i) {
+            Point *pj = &knn.at(i);
+            float d = adj[i][j];
+            //auto d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
+            pi->insertANeighbour(pj, d);
+            j++;
         }
     }
 }
@@ -87,14 +118,11 @@ std::vector<std::vector<int>> KNNParallel::distributeIndex(int nw) const {
             break;
         }
     }
-    for (auto &e: indexIntervall) {
-        printf("%d\n", e.size());
-    }
     return indexIntervall;
 }
 
 void KNNParallel::compute(int k, int nw) {
     auto indexes = distributeIndex(nw);
     initialize(k);
-    computeDistanceMatrix(indexes);
+    computeNeighbours(indexes);
 }

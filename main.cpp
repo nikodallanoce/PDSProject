@@ -45,9 +45,9 @@ int main() {
     KNNParallel kp(rp);
     KNN ks(rp);
 
-    int k = 50;
+    int k = 10;
     auto start = std::chrono::high_resolution_clock::now();
-    kp.compute(k, 16);
+    kp.compute(k, 1);
     auto tpar = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
     std::cout << "par: " << std::to_string(tpar.count()) << std::endl;
 
