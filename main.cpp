@@ -7,6 +7,8 @@
 #include "Point.h"
 #include "KNN.h"
 #include "KNNParallel.h"
+#include "KNNFF.h"
+#include "utimer.cpp"
 
 void print(const std::string &str) {
     std::cout << str << std::endl;
@@ -38,25 +40,48 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
     return points;
 }
 
-int main() {
+int main(int argc, char **argv) {
     std::cout << "Hello, World!" << std::endl;
-    generatePoints("points.txt", 30000);
-    auto rp= readPoints("points.txt");
+    int num_points = 100000;
+    int k = 100;
+    int num_workers = 16;
+    if (argc == 4) {
+        num_points = std::stoi(argv[1]);
+        k = std::stoi(argv[2]);
+        num_workers = std::stoi(argv[3]);
+    }
+    generatePoints("points.txt", num_points);
+    auto rp = readPoints("points.txt");
     KNNParallel kp(rp);
     KNN ks(rp);
+    KNNFF kff(rp);
 
-    int k = 10;
-    auto start = std::chrono::high_resolution_clock::now();
-    kp.compute(k, 1);
-    auto tpar = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "par: " << std::to_string(tpar.count()) << std::endl;
+    /*long tff;
+    {
+        utimer parallel("ff:", &tff);
+        kff.compute(k, num_workers);
+    }*/
 
-    start = std::chrono::high_resolution_clock::now();
-    ks.compute(k);
-    auto tseq = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "seq: " << std::to_string(tseq.count()) << std::endl;
+    long tpar;
+    {
+        utimer parallel("parallel:", &tpar);
+        //auto start = std::chrono::high_resolution_clock::now();
+        kp.compute(k, num_workers);
+        //auto tpar = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+        //std::cout << "par: " << std::to_string(tpar.count()) << std::endl;
+    }
 
-    std::cout << "spdup: " << std::to_string(tseq.count()/tpar.count()) << std::endl;
+    long tseq;
+
+    {
+        utimer sequential("sequential:", &tseq);
+        //start = std::chrono::high_resolution_clock::now();
+        ks.compute(k);
+        //auto tseq = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
+        //std::cout << "seq: " << std::to_string(tseq.count()) << std::endl;
+    }
+
+    std::cout << "spdup: " << std::to_string((long double) tseq / tpar) << std::endl;
 
     return 0;
 }

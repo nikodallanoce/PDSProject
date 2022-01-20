@@ -32,6 +32,26 @@ public:
     void forwardWithMatrix(std::vector<int> *rowIndexes, float* adj[]);
 
     void backwardWithMatrix(std::vector<int> *rowIndexes, float* adj[]);
+
+    std::vector<std::vector<int>> parallelDistributeIndex(int nw) const;
+
+    void backwardNew(int workerID, int totWorkers);
+
+    void forwardNew(int workerID, int totWorkers);
+
+    void computeNeighbours(int nw, bool forw);
+
+    void parallelDistancesNew(bool forw, int nw);
+
+    void computeNeighboursNew(int nw);
+
+    void computeAllDistances(int workerID, int workLoad);
+
+    void parallelDistancesAll(int nw);
+
+    void insertCoordinates(int workerID, int nw, int k);
+
+    void initializeParallel(int nw, int k);
 };
 
 

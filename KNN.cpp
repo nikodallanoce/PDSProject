@@ -49,9 +49,9 @@ KNN::KNN(std::vector<std::vector<float>> readPoints) {
 
 void KNN::compute(int k) {
     initialize(k);
-    forward();
-    backward();
-    /*for (int i = 0; i < readPoints.size() - 1; ++i) {
+    //forward();
+    //backward();
+    for (int i = 0; i < readPoints.size() - 1; ++i) {
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < readPoints.size(); ++j) {
             Point *pj = &knn.at(j);
@@ -59,7 +59,7 @@ void KNN::compute(int k) {
             pi->insertANeighbour(pj, dist);
             pj->insertANeighbour(pi, dist);
         }
-    }*/
+    }
 }
 
 void KNN::initialize(int k) {
@@ -69,7 +69,7 @@ void KNN::initialize(int k) {
         knn.at(i) = Point(i + 1, coord->at(0), coord->at(1), k);
     }
 }
-
+/*
 std::vector<std::vector<float>> KNN::computeDistanceMatrix() {
     std::vector<std::vector<float>> adj = std::vector(readPoints.size() - 1, std::vector<float>());
     for (int i = 0; i < readPoints.size() - 1; ++i) {
@@ -80,11 +80,11 @@ std::vector<std::vector<float>> KNN::computeDistanceMatrix() {
         adj[i] = row;
     }
     return adj;
-}
+}*/
 
 float KNN::eucledeanDistance(const std::vector<float> *p1, const std::vector<float> *p2) {
     float d = powf(p2->at(0) - p1->at(0), 2) + powf(p2->at(1) - p1->at(1), 2);
-    return sqrtf(d);
+    return d;
 }
 
 void KNN::forward() {
@@ -106,7 +106,7 @@ void KNN::backward() {
         }
     }
 }
-
+/*
 std::string KNN::getTopKResultPerPoint() {
     std::string ris;
     for (auto p: knn) {
@@ -117,4 +117,4 @@ std::string KNN::getTopKResultPerPoint() {
     }
 
     return ris;
-}
+}*/
