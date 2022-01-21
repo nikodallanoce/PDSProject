@@ -44,6 +44,7 @@ void Point::insertANeighbour(const Point *p, const float d) {
 
 std::vector<const Point *> Point::getTopKNeighbours() {
     auto topKPoints = std::vector<const Point *>();
+    topKPoints.reserve(neighbours.size());
     while (!neighbours.empty()) {
         topKPoints.push_back(neighbours.top().first);
         neighbours.pop();

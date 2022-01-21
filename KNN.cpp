@@ -9,6 +9,8 @@
 #include <utility>
 #include "KNN.h"
 #include <thread>
+#include <fstream>
+#include "string.h"
 
 KNN::KNN(std::vector<std::vector<float>> readPoints) {
     this->readPoints = std::move(readPoints);
@@ -69,6 +71,7 @@ void KNN::initialize(int k) {
         knn.at(i) = Point(i + 1, coord->at(0), coord->at(1), k);
     }
 }
+
 /*
 std::vector<std::vector<float>> KNN::computeDistanceMatrix() {
     std::vector<std::vector<float>> adj = std::vector(readPoints.size() - 1, std::vector<float>());
@@ -106,15 +109,56 @@ void KNN::backward() {
         }
     }
 }
-/*
+
 std::string KNN::getTopKResultPerPoint() {
     std::string ris;
     for (auto p: knn) {
         auto topk = p.getTopKNeighbours();
         ris += std::to_string(p.getId()) + "-> ";
-        std::for_each(topk.begin(), topk.end(), [&ris](auto ptk) { ris += std::to_string(ptk->getId()) + " "; });
-        ris += "\n";
+        for (auto ptk: topk) {
+            ris = ris.append(std::to_string(ptk->getId()) + " ");
+        }
+        ris = ris.append("\n");
     }
 
     return ris;
-}*/
+}
+
+void KNN::storeTopKNeighbours(int workerID, int workLoad, std::string *neigh) {
+    int bound = workerID * workLoad + workLoad;
+    bound > knn.size() ? bound = (int) knn.size() : bound;
+    std::string ris;
+    for (int i = workerID * workLoad; i < bound; i++) {
+        Point *p = &knn.at(i);
+        auto topk = p->getTopKNeighbours();
+        ris += std::to_string(p->getId()) + "-> ";
+        for (auto ptk: topk) {
+            ris = ris.append(std::to_string(ptk->getId()) + " ");
+        }
+        neigh[i] = ris;
+        ris = "";
+    }
+}
+
+void KNN::printResultInFile(const std::string &fileName, const int nw) {
+    std::string ris;
+    std::ofstream MyFile(fileName);
+    auto neigh = new std::string[knn.size()];
+    //neigh.reserve(knn.size());
+    std::vector<std::thread> procDist = std::vector<std::thread>();
+    int workLoad = (int) knn.size() / nw + 1;
+    for (int i = 0; i < nw; ++i) {
+        procDist.emplace_back(&KNN::storeTopKNeighbours, this, i, workLoad, neigh);
+    }
+
+    for (std::thread &t: procDist) {                        // await thread termination
+        t.join();
+    }
+
+    for (int i = 0; i < knn.size(); ++i) {
+        ris = ris.append(neigh[i].append("\n"));
+    }
+
+    MyFile << ris;
+    MyFile.close();
+}

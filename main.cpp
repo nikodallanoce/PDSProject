@@ -20,10 +20,15 @@ void generatePoints(const std::string &fileName, int numOfPoints) {
     std::uniform_real_distribution<float> dist(0.0, 10.0);
     std::vector<float> randNums = std::vector<float>(numOfPoints);
     std::ofstream MyFile(fileName);
+    std::string out;
 
     for (int i = 0; i < numOfPoints; ++i) {
-        MyFile << dist(mt) << "," << dist(mt) << std::endl;
+        out = out.append(std::to_string(dist(mt)))
+                .append(",")
+                .append(std::to_string(dist(mt)))
+                .append("\n");
     }
+    MyFile << out;
     MyFile.close();
 }
 
@@ -42,8 +47,8 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 
 int main(int argc, char **argv) {
     std::cout << "Hello, World!" << std::endl;
-    int num_points = 100000;
-    int k = 100;
+    int num_points =1000;
+    int k = 20;
     int num_workers = 16;
     if (argc == 4) {
         num_points = std::stoi(argv[1]);
@@ -56,29 +61,27 @@ int main(int argc, char **argv) {
     KNN ks(rp);
     KNNFF kff(rp);
 
+
     /*long tff;
     {
         utimer parallel("ff:", &tff);
         kff.compute(k, num_workers);
+        kff.printResultInFile("results_ff.txt", num_workers);
     }*/
+
 
     long tpar;
     {
         utimer parallel("parallel:", &tpar);
-        //auto start = std::chrono::high_resolution_clock::now();
         kp.compute(k, num_workers);
-        //auto tpar = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-        //std::cout << "par: " << std::to_string(tpar.count()) << std::endl;
+        kp.printResultInFile("results_parallel.txt", num_workers);
     }
 
     long tseq;
-
     {
         utimer sequential("sequential:", &tseq);
-        //start = std::chrono::high_resolution_clock::now();
         ks.compute(k);
-        //auto tseq = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-        //std::cout << "seq: " << std::to_string(tseq.count()) << std::endl;
+        ks.printResultInFile("results_seq.txt", 1);
     }
 
     std::cout << "spdup: " << std::to_string((long double) tseq / tpar) << std::endl;

@@ -13,15 +13,20 @@ protected:
     std::vector<Point> knn;
     std::vector<std::vector<float>> readPoints;
     void initialize(int dim);
-    std::string getTopKResultPerPoint();
+
     void backward();
     void forward();
     void insertNeighbour(Point *pi, Point *pj, float dist);
     static float eucledeanDistance(const std::vector<float> *p1, const std::vector<float> *p2);
 public:
     KNN(std::vector<std::vector<float>> readPoints);
+    std::string getTopKResultPerPoint();
     void compute(int k);
     std::vector<std::vector<float>> computeDistanceMatrix();
+
+    void printResultInFile(const std::string& fileName, const int nw);
+
+    void storeTopKNeighbours(int workerID, int workLoad, std::string *neigh);
 };
 
 
