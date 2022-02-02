@@ -17,21 +17,11 @@ public:
 
     void compute(int k, int nw);
 
-    void computeNeighbours(std::vector<std::vector<int>> indexes);
-
-    void parallelDistances(std::vector<std::vector<int>> &indexes, bool forw, float *adj[]);
-
-    void forwardWithMatrix(std::vector<int> *rowIndexes, float *adj[]);
-
-    void backwardWithMatrix(std::vector<int> *rowIndexes, float *adj[]);
-
     void computeNeighForIntevallPoints(int iStart, int iEnd);
 
     void parallelComputeKNN(int nw);
 
-    std::vector<std::vector<int>> distributeIndex(int nw) const;
-
-    void printResultInFile(const std::string &fileName, const int nw);
+    void printResultInFile(const std::string &fileName, int nw);
 
     void storeTopKNeighbours(int iStart, int iEnd, std::string *neigh);
 };

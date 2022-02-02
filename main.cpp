@@ -60,34 +60,33 @@ int main(int argc, char **argv) {
             num_workers = std::stoi(argv[4]);
     }
     std::vector<std::vector<float>> rp;
-    generatePoints("points.txt", num_points);
+    generatePoints("input/points.txt", num_points);
     {
         utimer reading("reading:");
-        rp = readPoints("points.txt");
+        rp = readPoints("input/points.txt");
     }
-
 
     long time;
     if(mode == "seq"){
         {
             utimer seq(mode + ":", &time);
-            KNN kseq (rp);
+            KNN kseq(rp);
             kseq.compute(k);
-            kseq.printResultInFile("results_seq.txt");
+            kseq.printResultInFile("output/results_seq.txt");
         }
     } else if(mode == "par"){
         {
             utimer par(mode + ":", &time);
             KNNParallel kp(rp);
             kp.compute(k, num_workers);
-            kp.printResultInFile("results_par.txt", num_workers);
+            kp.printResultInFile("output/results_par.txt", num_workers);
         }
     } else if(mode == "ff"){
         {
             utimer ff(mode + ":", &time);
             KNNFF kff(rp);
             kff.compute(k, num_workers);
-            kff.printResultInFile("results_ff.txt", num_workers);
+            kff.printResultInFile("output/results_ff.txt", num_workers);
         }
     }
     return 0;

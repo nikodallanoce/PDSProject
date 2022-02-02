@@ -11,6 +11,7 @@
 #include <ff/ff.hpp>
 #include <ff/parallel_for.hpp>
 #include <fstream>
+#include "utimer.cpp"
 
 using namespace ff;
 
@@ -52,12 +53,16 @@ void KNNFF::printResultInFile(const std::string &fileName, const int nw) {
 
     storeTopKNeighbours(nw, neigh);
     std::string ris;
-    for (int i = 0; i < knn.size(); ++i) {
-        ris = ris.append(neigh[i].append("\n"));
-    }
 
-    MyFile << ris;
-    MyFile.close();
+    {
+        utimer writeFF("writing:");
+        for (int i = 0; i < knn.size(); ++i) {
+            ris = ris.append(neigh[i].append("\n"));
+        }
+
+        MyFile << ris;
+        MyFile.close();
+    }
 }
 
 void KNNFF::compute(int k, int nw) {
