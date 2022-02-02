@@ -10,7 +10,6 @@
 #include <vector>
 #include <queue>
 #include <list>
-#include <mutex>
 
 
 class Point {
@@ -28,13 +27,12 @@ public:
 private:
     int ID;
     std::vector<float> coordinates;
-public:
-    const std::vector<float> &getCoordinates() const;
-
-private:
+    int k;
     std::priority_queue<pi, std::vector<pi>, comp> neighbours;
 
 public:
+
+
     Point();
 
     Point(int ID, float x, float y, int k);
@@ -45,7 +43,11 @@ public:
 
     std::vector<const Point *> getTopKNeighbours();
 
-    void initializeNeighbours(int k);
+    void initializeNeighbours();
+
+    const float getX() const;
+
+    const float getY() const;
 };
 
 

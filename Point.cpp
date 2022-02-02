@@ -6,31 +6,42 @@
 #include <iostream>
 #include <functional>
 #include <memory>
+#include "limits"
 #include "Point.h"
 
-std::mutex mtx;
 
 Point::Point(int ID, float x, float y, int k) {
     this->ID = ID;
     this->coordinates = {x, y};
-    initializeNeighbours(k);
+    this->k = k;
+    //initializeNeighbours();
 }
 
 int Point::getId() const {
     return ID;
 }
 
-void Point::initializeNeighbours(int k) {
+const float Point::getX() const{
+    return coordinates.at(0);
+}
+
+const float Point::getY() const{
+    return coordinates.at(1);
+}
+
+
+void Point::initializeNeighbours() {
     const Point *p = new Point();
     std::pair<const Point *, float> ins = std::make_pair(p, std::numeric_limits<float>::max());
     for (int i = 0; i < k; ++i) {
-        neighbours.push(ins);
+        neighbours.emplace(ins);
     }
 }
 
 Point::Point() {
     ID = -1;
     this->coordinates = std::vector<float>();
+    this->k = 0;
 }
 
 void Point::insertANeighbour(const Point *p, const float d) {
@@ -50,10 +61,6 @@ std::vector<const Point *> Point::getTopKNeighbours() {
         neighbours.pop();
     }
     return topKPoints;
-}
-
-const std::vector<float> &Point::getCoordinates() const {
-    return coordinates;
 }
 
 

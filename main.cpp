@@ -10,6 +10,8 @@
 #include "KNNFF.h"
 #include "utimer.cpp"
 
+KNN modeSelection(const std::string &mode, const std::vector<std::vector<float>> &rp);
+
 void print(const std::string &str) {
     std::cout << str << std::endl;
 }
@@ -18,7 +20,7 @@ void generatePoints(const std::string &fileName, int numOfPoints) {
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<float> dist(0.0, 10.0);
-    std::vector<float> randNums = std::vector<float>(numOfPoints);
+    //std::vector<float> randNums = std::vector<float>(numOfPoints);
     std::ofstream MyFile(fileName);
     std::string out;
 
@@ -46,45 +48,48 @@ std::vector<std::vector<float>> readPoints(const std::string &fileName) {
 }
 
 int main(int argc, char **argv) {
-    std::cout << "Hello, World!" << std::endl;
-    int num_points =1000;
-    int k = 20;
+    int num_points = 20000;
+    int k = 10;
     int num_workers = 16;
-    if (argc == 4) {
-        num_points = std::stoi(argv[1]);
-        k = std::stoi(argv[2]);
-        num_workers = std::stoi(argv[3]);
+    std::string mode = "par";
+    if (argc > 1) {
+        mode = argv[1];
+        num_points = std::stoi(argv[2]);
+        k = std::stoi(argv[3]);
+        if (mode != "seq")
+            num_workers = std::stoi(argv[4]);
     }
+    std::vector<std::vector<float>> rp;
     generatePoints("points.txt", num_points);
-    auto rp = readPoints("points.txt");
-    KNNParallel kp(rp);
-    KNN ks(rp);
-    KNNFF kff(rp);
-
-
-    /*long tff;
     {
-        utimer parallel("ff:", &tff);
-        kff.compute(k, num_workers);
-        kff.printResultInFile("results_ff.txt", num_workers);
-    }*/
-
-
-    long tpar;
-    {
-        utimer parallel("parallel:", &tpar);
-        kp.compute(k, num_workers);
-        kp.printResultInFile("results_parallel.txt", num_workers);
+        utimer reading("reading:");
+        rp = readPoints("points.txt");
     }
 
-    long tseq;
-    {
-        utimer sequential("sequential:", &tseq);
-        ks.compute(k);
-        ks.printResultInFile("results_seq.txt", 1);
+
+    long time;
+    if(mode == "seq"){
+        {
+            utimer seq(mode + ":", &time);
+            KNN kseq (rp);
+            kseq.compute(k);
+            kseq.printResultInFile("results_seq.txt");
+        }
+    } else if(mode == "par"){
+        {
+            utimer par(mode + ":", &time);
+            KNNParallel kp(rp);
+            kp.compute(k, num_workers);
+            kp.printResultInFile("results_par.txt", num_workers);
+        }
+    } else if(mode == "ff"){
+        {
+            utimer ff(mode + ":", &time);
+            KNNFF kff(rp);
+            kff.compute(k, num_workers);
+            kff.printResultInFile("results_ff.txt", num_workers);
+        }
     }
-
-    std::cout << "spdup: " << std::to_string((long double) tseq / tpar) << std::endl;
-
     return 0;
 }
+

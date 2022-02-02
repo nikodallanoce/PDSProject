@@ -18,8 +18,6 @@ public:
 
     void compute(int k, int nw);
 
-    void computeAllDistances(int workerID, int workLoad);
-
     void printResultInFile(const std::string &fileName, const int nw);
 
     void storeTopKNeighbours(int nw, std::string *neigh);

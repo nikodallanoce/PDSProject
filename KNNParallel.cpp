@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <utility>
 #include <future>
+#include <fstream>
 #include "KNNParallel.h"
+#include "utimer.cpp"
 
 #define EOS NULL
 
@@ -33,21 +35,6 @@ void KNNParallel::computeNeighbours(std::vector<std::vector<int>> indexes) {
     std::cout << "in: " << std::to_string(elapsed.count()) << std::endl;
 }
 
-void KNNParallel::computeNeighboursNew(int nw) {
-    //float *m[this->readPoints.size()];
-    auto start = std::chrono::high_resolution_clock::now();
-    parallelDistancesNew(true, nw);
-    auto elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "av: " << std::to_string(elapsed.count()) << std::endl;
-
-    //indexes.at(indexes.size() - 1).push_back((int) readPoints.size() - 1);
-
-    start = std::chrono::high_resolution_clock::now();
-    parallelDistancesNew(false, nw);
-    elapsed = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - start);
-    std::cout << "in: " << std::to_string(elapsed.count()) << std::endl;
-}
-
 void KNNParallel::parallelDistances(std::vector<std::vector<int>> &indexes, bool forw, float *adj[]) {
     std::vector<std::thread> procDist = std::vector<std::thread>();
     procDist.reserve(indexes.size());
@@ -67,121 +54,33 @@ void KNNParallel::parallelDistances(std::vector<std::vector<int>> &indexes, bool
     }
 }
 
-void KNNParallel::computeAllDistances(int workerID, int workLoad) {
-    int bound = workerID * workLoad + workLoad;
-    bound > knn.size() ? bound = (int) knn.size() : bound;
+void KNNParallel::computeNeighForIntevallPoints(int iStart, int iEnd) {
 
-    for (int i = workerID * workLoad; i < bound; i++) {
-        Point *pi = &knn.at(i);
-        for (int j = 0; j < knn.size(); ++j) {
-            if (j != i) {
-                Point *pj = &knn.at(j);
-                pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-            }
-        }
+    int totPoints = (int) knn.size();
+    for (int i = iStart; i < iEnd; i++) {
+        computeNeighForNode(totPoints, i);
     }
 }
 
-/*void KNNParallel::computeAllDistances(int workerID, int totWorkers) {
-    int limit = (int) readPoints.size();
-    for (int i = workerID; i < limit; i = i + totWorkers) {
-        Point *pi = &knn.at(i);
-        for (int j = 0; j < knn.size(); ++j) {
-            if (j != i) {
-                Point *pj = &knn.at(j);
-                pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-            }
-        }
-    }
-}*/
 
-void KNNParallel::parallelDistancesAll(int nw) {
+void KNNParallel::parallelComputeKNN(int nw) {
     std::vector<std::thread> procDist = std::vector<std::thread>();
     procDist.reserve(nw);
-    int workLoad = (int) knn.size() / nw + 1;
+    int iStart = 0;
+    int reminder = (int) readPoints.size() % nw;
+    int workload = (int) readPoints.size() / nw;
     for (int i = 0; i < nw - 1; ++i) {
-        procDist.emplace_back(&KNNParallel::computeAllDistances, this, i, workLoad);
+        int iEnd = iStart + workload;
+        if (reminder > 0) {
+            iEnd = iEnd + 1;
+            reminder--;
+        }
+        procDist.emplace_back(&KNNParallel::computeNeighForIntevallPoints, this, iStart, iEnd);
+        iStart = iEnd;
     }
-    computeAllDistances(nw - 1, workLoad);
+    computeNeighForIntevallPoints(iStart, (int) readPoints.size());
     for (std::thread &t: procDist) {                        // await thread termination
         t.join();
-    }
-}
-
-void KNNParallel::forward(std::vector<int> *rowIndexes) {
-    for (int i: *rowIndexes) {
-        Point *pi = &knn.at(i);
-        for (int j = i + 1; j < knn.size(); ++j) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
-    }
-}
-
-void KNNParallel::backward(std::vector<int> *rowIndexes) {
-    for (int i: *rowIndexes) {
-        Point *pi = &knn.at(i);
-        for (int j = i - 1; j >= 0; j--) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
-    }
-}
-
-void KNNParallel::parallelDistancesNew(bool forw, int nw) {
-    std::vector<std::thread> procDist = std::vector<std::thread>();
-    procDist.reserve(nw);
-    if (forw) {
-        for (int i = 0; i < nw; i++) {
-            //procDist.emplace_back(&KNNParallel::forwardWithMatrix, this, &index, adj);
-            procDist.emplace_back(&KNNParallel::forwardNew, this, i, nw);
-        }
-    } else {
-        for (int i = 0; i < nw; i++) {
-            //procDist.emplace_back(&KNNParallel::backwardWithMatrix, this, &index, adj);
-            procDist.emplace_back(&KNNParallel::backwardNew, this, i, nw);
-        }
-    }
-    for (std::thread &t: procDist) {                        // await thread termination
-        t.join();
-    }
-}
-
-void KNNParallel::backwardNew(int workerID, int totWorkers) {
-
-    int limit = (int) readPoints.size() / 2;
-    for (int i = workerID; i < limit; i = i + totWorkers) {
-        Point *pi = &knn.at(i);
-        for (int j = i - 1; j >= 0; j--) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
-        int rev = (int) readPoints.size() - 1 - i;
-        //std::cout << "w_r: " << workerID << " i: " << i << "_" << rev << "\n";
-        pi = &knn.at(rev);
-        for (int j = rev - 1; j >= 0; j--) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
-    }
-}
-
-void KNNParallel::forwardNew(int workerID, int totWorkers) {
-    int limit = (int) readPoints.size() / 2;
-    for (int i = workerID; i < limit; i = i + totWorkers) {
-        Point *pi = &knn.at(i);
-        for (int j = i + 1; j < knn.size(); ++j) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
-
-        int rev = (int) readPoints.size() - 1 - i;
-        //std::cout << "w: " << workerID << " i: " << i << "_" << rev << "\n";
-        pi = &knn.at(rev);
-        for (int j = rev + 1; j < knn.size(); ++j) {
-            Point *pj = &knn.at(j);
-            pi->insertANeighbour(pj, eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates()));
-        }
     }
 }
 
@@ -192,7 +91,7 @@ void KNNParallel::forwardWithMatrix(std::vector<int> *rowIndexes, float *adj[]) 
         Point *pi = &knn.at(i);
         for (int j = i + 1; j < knn.size(); ++j) {
             Point *pj = &knn.at(j);
-            auto d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
+            auto d = euclideanDistance(pi, pj);
             rowDist[j - i - 1] = d;
             pi->insertANeighbour(pj, d);
         }
@@ -207,7 +106,7 @@ void KNNParallel::backwardWithMatrix(std::vector<int> *rowIndexes, float *adj[])
         for (i = i - 1; i >= 0; --i) {
             Point *pj = &knn.at(i);
             float d = adj[i][j];
-            //auto d = eucledeanDistance(&pi->getCoordinates(), &pj->getCoordinates());
+            //auto d = euclideanDistance(&pi->getCoordinates(), &pj->getCoordinates());
             pi->insertANeighbour(pj, d);
             j++;
         }
@@ -241,33 +140,57 @@ std::vector<std::vector<int>> KNNParallel::distributeIndex(int nw) const {
     return indexIntervall;
 }
 
-void KNNParallel::initializeParallel(int nw, int k) {
-    knn = std::vector<Point>(readPoints.size());
-    std::vector<std::thread> proc = std::vector<std::thread>();
-    proc.reserve(nw);
-    int workLoad = (int) knn.size() / nw + 1;
-    for (int i = 0; i < nw; ++i) {
-        proc.emplace_back(&KNNParallel::insertCoordinates, this, i, workLoad, k);
-    }
-    for (std::thread &t: proc) {                        // await thread termination
-        t.join();
+void KNNParallel::storeTopKNeighbours(int iStart, int iEnd, std::string *neigh) {
+    std::string ris;
+    for (int i = iStart; i < iEnd; i++) {
+        Point *p = &knn.at(i);
+        auto topk = p->getTopKNeighbours();
+        ris = ris.append(std::to_string(p->getId()) + "-> ");
+        for (auto ptk: topk) {
+            ris = ris.append(std::to_string(ptk->getId()) + " ");
+        }
+        neigh[i] = ris;
+        ris = "";
     }
 }
 
-void KNNParallel::insertCoordinates(int workerID, int nw, int k) {
-    int limit = (int) readPoints.size();
-    for (int i = workerID * nw; i < (workerID * nw + nw) && i < readPoints.size(); i = i + 1) {
-        std::vector<float> *coord = &readPoints.at(i);
-        knn.at(i) = Point(i + 1, coord->at(0), coord->at(1), k);
-        //std::cout << "worker: " << workerID << " i: " << i << "\n";
+void KNNParallel::printResultInFile(const std::string &fileName, const int nw) {
+    std::string ris;
+    std::ofstream MyFile(fileName);
+    auto neigh = new std::string[knn.size()];
+    std::vector<std::thread> procDist = std::vector<std::thread>();
+    procDist.reserve(nw);
+    int iStart = 0;
+    int reminder = (int) readPoints.size() % nw;
+    int workload = (int) readPoints.size() / nw;
+    for (int i = 0; i < nw - 1; ++i) {
+        int iEnd = iStart + workload;
+        if (reminder > 0) {
+            iEnd = iEnd + 1;
+            reminder--;
+        }
+        procDist.emplace_back(&KNNParallel::storeTopKNeighbours, this, iStart, iEnd, neigh);
+        iStart = iEnd;
+    }
+    storeTopKNeighbours(iStart, (int) readPoints.size(), neigh);
+    for (std::thread &t: procDist) {
+        t.join();
+    }
+
+    {
+        utimer writing("writing:");
+        for (int i = 0; i < knn.size(); ++i) {
+            ris = ris.append(neigh[i].append("\n"));
+        }
+
+        MyFile << ris;
+        MyFile.close();
     }
 }
 
 void KNNParallel::compute(int k, int nw) {
     //auto indexes = distributeIndex(nw);
-    //initializeParallel(nw, k);
     initialize(k);
-
-    parallelDistancesAll(nw);
+    parallelComputeKNN(nw);
     //computeNeighbours(indexes);
 }
